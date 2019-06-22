@@ -81,6 +81,10 @@ int main( int argc, char** argv )
     double worst_case_time_sobel=0,worst_case_time_canny=0;
     double frame_rate_sobel,frame_rate_canny;
     double current_frame_time,time_taken_for_frame;
+    double sobel_min_time=10000,sobel_max_time=0,sobel_reference_frame_time;
+    double canny_min_time=10000,canny_max_time=0,canny_reference_frame_time;
+    double sobel_positive_jitter,sobel_negative_jitter;
+    double canny_positive_jitter,canny_negative_jitter;
 
     char c,c2='a';
 
@@ -91,22 +95,61 @@ int main( int argc, char** argv )
           time_taken_for_frame = getTimeMsec() - current_frame_time;
           if(c2 == 's' || c2 == 'S'){
               sobel_frame_count++;
-              syslog(LOG_INFO,"Time taken for sobel transform frame %d: %lf",(int)sobel_frame_count,time_taken_for_frame);
-              //syslog(LOG_INFO,"Current Total Sobel frame time  = %lf milliseconds\n",total_time_sobel);
-              //frame_computations(total_time_sobel,worst_case_time_sobel,time_taken_for_frame);
-              total_time_sobel += time_taken_for_frame;
-              if(time_taken_for_frame>worst_case_time_sobel){
+              if(sobel_frame_count<=101){
+                   if(time_taken_for_frame<sobel_min_time){
+                      sobel_min_time=time_taken_for_frame;
+                   }
+                   if(time_taken_for_frame>sobel_max_time){
+                     sobel_max_time = time_taken_for_frame;
+                   }
+
+                   if(sobel_frame_count==101){
+                     sobel_reference_frame_time = (sobel_max_time+sobel_min_time)/2; 
+                   }
+              }else{
+                syslog(LOG_INFO,"Time taken for sobel transform frame %d: %lf",(int)sobel_frame_count,time_taken_for_frame);
+                total_time_sobel += time_taken_for_frame;
+                if(time_taken_for_frame>worst_case_time_sobel){
                   worst_case_time_sobel=time_taken_for_frame;
+                }
+                if(time_taken_for_frame>sobel_reference_frame_time){
+                  sobel_positive_jitter += time_taken_for_frame-sobel_reference_frame_time;
+                }
+                if(time_taken_for_frame<sobel_reference_frame_time){
+                  sobel_negative_jitter += sobel_reference_frame_time - time_taken_for_frame;
+                }
+
               }
 
           }else if(c2 == 'c' || c2 == 'C' ){
               canny_frame_count++;
-              syslog(LOG_INFO,"Time for canny transform on  frame %d: %lf",(int)canny_frame_count,time_taken_for_frame);
-              total_time_canny += time_taken_for_frame;
-              if(time_taken_for_frame>worst_case_time_canny){
+              if(canny_frame_count<=101){
+                if(time_taken_for_frame<canny_min_time){
+                      canny_min_time=time_taken_for_frame;
+                }
+                syslog(LOG_INFO,"canny_min_time: %lf",canny_min_time);
+                if(time_taken_for_frame>canny_max_time){
+                     canny_max_time = time_taken_for_frame;
+                }
+                syslog(LOG_INFO,"canny_max_time: %lf",canny_max_time);
+
+                if(canny_frame_count==101){
+                     canny_reference_frame_time = (canny_max_time+canny_min_time)/2; 
+                     syslog(LOG_INFO,"canny_reference_time: %lf",canny_reference_frame_time);
+                }
+              }else{
+                syslog(LOG_INFO,"Time for canny transform on  frame %d: %lf",(int)canny_frame_count,time_taken_for_frame);
+                total_time_canny += time_taken_for_frame;
+                if(time_taken_for_frame>worst_case_time_canny){
                   worst_case_time_canny=time_taken_for_frame;
+                }
+                if(time_taken_for_frame>canny_reference_frame_time){
+                  canny_positive_jitter += time_taken_for_frame-canny_reference_frame_time;
+                }
+                if(time_taken_for_frame<canny_reference_frame_time){
+                  canny_negative_jitter += canny_reference_frame_time - time_taken_for_frame;
+                }
               }
-              //frame_computations(total_time_canny,worst_case_time_canny,time_taken_for_frame);
           }
         }
         capture1  >> mat_frame;
@@ -140,21 +183,33 @@ int main( int argc, char** argv )
     printf("Canny Frames processed: %d\n",(int)canny_frame_count);
     syslog(LOG_INFO,"Canny Frames processed: %d\n",(int)canny_frame_count);
     //Sobel frame stats
-    frame_rate_sobel = sobel_frame_count*1000/total_time_sobel;
+    frame_rate_sobel = (sobel_frame_count-100)*1000/total_time_sobel;
     printf("Total Sobel frame time  = %lf milliseconds\n",total_time_sobel);
     syslog(LOG_INFO,"Total Sobel frame time  = %lf milliseconds\n",total_time_sobel);
     printf("worst case time sobel frame = %lf  milliseconds\n", worst_case_time_sobel);
     syslog(LOG_INFO,"worst case time sobel frame = %lf  milliseconds\n", worst_case_time_sobel);
     printf("average sobel frame rate = %f frames per second\n", frame_rate_sobel);
     syslog(LOG_INFO,"average sobel frame rate = %f \n", frame_rate_sobel);
+    printf("Sobel reference value: %lf\n",sobel_reference_frame_time);
+    syslog(LOG_INFO,"Sobel reference value: %lf\n",sobel_reference_frame_time);
+    printf("Sobel positive jitter = %lf milliseconds\n",sobel_positive_jitter);
+    syslog(LOG_INFO,"Sobel positive jitter = %lf milliseconds\n ",sobel_positive_jitter);
+    printf("Sobel negative jitter = %lf milliseconds\n",sobel_negative_jitter);
+    syslog(LOG_INFO,"Sobel negative jitter = %lf milliseconds\n",sobel_negative_jitter);
     //Canny frame stats
-    frame_rate_canny = canny_frame_count*1000/total_time_canny;
+    frame_rate_canny = (canny_frame_count-100)*1000/total_time_canny;
     printf("Total canny frame time  = %lf milliseconds\n",total_time_canny);
     syslog(LOG_INFO,"Total canny frame time  = %lf milliseconds\n",total_time_canny);
     printf("worst case time canny frame = %lf  milliseconds\n", worst_case_time_canny);
     syslog(LOG_INFO,"worst case time canny frame = %lf  milliseconds\n", worst_case_time_canny);
     printf("average canny frame rate = %f frames per second \n", frame_rate_canny);
     syslog(LOG_INFO,"average canny frame rate = %f \n", frame_rate_canny);
+    printf("Canny reference value: %lf\n",canny_reference_frame_time);
+    syslog(LOG_INFO,"Canny reference value: %lf\n",canny_reference_frame_time);
+    printf("Canny positive jitter = %lf milliseconds\n",canny_positive_jitter);
+    syslog(LOG_INFO,"Canny positive jitter = %lf milliseconds\n ",canny_positive_jitter);
+    printf("Canny negative jitter = %lf milliseconds\n",canny_negative_jitter);
+    syslog(LOG_INFO,"Canny negative jitter = %lf milliseconds\n",canny_negative_jitter);
 
     capture1.release();
     

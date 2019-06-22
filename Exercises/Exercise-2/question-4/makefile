@@ -14,7 +14,7 @@ CPPFILES= sobel_canny_capture.cpp
 SRCS= ${HFILES} ${CFILES}
 CPPOBJS= ${CPPFILES:.cpp=.o}
 
-all:	capture 
+all:	sobel_canny_capture 
 
 clean:
 	-rm -f *.o *.d
@@ -23,7 +23,7 @@ clean:
 distclean:
 	-rm -f *.o *.d
 
-capture: sobel_canny_capture.o
+sobel_canny_capture: sobel_canny_capture.o
 	$(CC) $(LDFLAGS) $(CFLAGS) -o $@ $@.o `pkg-config --libs opencv` $(CPPLIBS)
 
 depend:
