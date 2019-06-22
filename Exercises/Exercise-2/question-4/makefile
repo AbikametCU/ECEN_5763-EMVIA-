@@ -9,7 +9,7 @@ CPPLIBS= -L/usr/lib -lopencv_core -lopencv_flann -lopencv_video
 
 HFILES= 
 CFILES= 
-CPPFILES= capture.cpp
+CPPFILES= sobel_canny_capture.cpp
 
 SRCS= ${HFILES} ${CFILES}
 CPPOBJS= ${CPPFILES:.cpp=.o}
@@ -18,12 +18,12 @@ all:	capture
 
 clean:
 	-rm -f *.o *.d
-	-rm -f capture
+	-rm -f sobel_canny_capture
 
 distclean:
 	-rm -f *.o *.d
 
-capture: capture.o
+capture: sobel_canny_capture.o
 	$(CC) $(LDFLAGS) $(CFLAGS) -o $@ $@.o `pkg-config --libs opencv` $(CPPLIBS)
 
 depend:
