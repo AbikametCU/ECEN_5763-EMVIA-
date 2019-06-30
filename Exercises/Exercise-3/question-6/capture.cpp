@@ -151,7 +151,8 @@ int main( int argc, char** argv )
     Mat mat_frame, mat_gray, mat_diff, mat_gray_prev,diff_frame_blur;
     Mat rgb_threshold_frame;
     double x_bar,y_bar;
-    VideoCapture cap("Light-Room-Laser-Spot-with-Clutter (1).mpeg");
+    //VideoCapture cap("Light-Room-Laser-Spot-with-Clutter (1).mpeg");
+    VideoCapture cap("Dark-Room-Laser-Spot-with-Clutter.mpeg");
     //VideoWriter video("Dark-Room-Laser-Spot-with-Clutter_modified.avi",CV_FOURCC('M','J','P','G'),10, Size(1920,1080));
     struct edges edges_1 ={0,0,0,0};
 	

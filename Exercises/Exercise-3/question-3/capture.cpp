@@ -108,7 +108,7 @@ int main( int argc, char** argv )
     image_name = "image_"+to_string(i)+".pgm";
     i++;
     imshow("mat_diff",mat_diff);
-    imwrite(image_name,mat_diff);
+   // imwrite(image_name,mat_diff);
     //imshow("mat diff blur",diff_frame_blur);
     video << mat_diff;
     //printf("\n capturing frame");
