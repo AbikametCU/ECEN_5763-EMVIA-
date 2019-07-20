@@ -18,50 +18,6 @@ using namespace std;
 
 char difftext[20];
 
-
-Mat custom_threshold(Mat mat_frame){
-    int x,y;
-    for(x=0;x<mat_frame.rows;x++){
-        for(y=0;y<mat_frame.cols;y++){
-            if(mat_frame.at<uchar>(x,y)>100){
-                mat_frame.at<uchar>(x,y)=255;
-          
-            }else{
-             mat_frame.at<uchar>(x,y)=0;
-            }
-      } 
-   }
-    return mat_frame;
-}
-
-Mat salt_noise_removal(Mat mat_frame){
-    int x,y,sum=0;
-    for(x=0;x<mat_frame.rows;x++){
-        for(y=0;y<mat_frame.cols;y++){
-
-            if(mat_frame.at<uchar>(x,y)=255){
-                
-                sum+=mat_frame.at<uchar>(x-1,y-1)>250?1:0;
-                sum+=mat_frame.at<uchar>(x,y-1)>250?1:0;
-                sum+=mat_frame.at<uchar>(x+1,y+1>250?1:0);
-                sum+=mat_frame.at<uchar>(x+1,y)>250?1:0;
-                sum+=mat_frame.at<uchar>(x+1,y+1)>250?1:0;
-                sum+=mat_frame.at<uchar>(x,y+1)>250?1:0;
-                sum+=mat_frame.at<uchar>(x-1,y+1)>250?1:0;
-                sum+=mat_frame.at<uchar>(x-1,y)>250?1:0;
-
-                if(sum>4){
-                    mat_frame.at<uchar>(x,y)=0;
-                }
-                
-            }
-      } 
-   }
-    return mat_frame;
-}
-
-
-
 Mat custom_rgb_threshold(Mat mat_frame){
     int x,y;
     printf("\nno of channels in rgb threshold:%d",mat_frame.channels());
@@ -91,13 +47,16 @@ Mat custom_rgb_threshold(Mat mat_frame){
     return mat_frame;
 }
 
-Mat red_green_intensity_flusher(Mat mat_frame){
+Mat custom_threshold(Mat mat_frame){
     int x,y;
-    printf("\nno of channels in rgb threshold:%d",mat_frame.channels());
     for(x=0;x<mat_frame.rows;x++){
         for(y=0;y<mat_frame.cols;y++){
-            mat_frame.at<Vec3b>(x,y)[1]=mat_frame.at<Vec3b>(x,y)[1]-50;        
-            mat_frame.at<Vec3b>(x,y)[2]=mat_frame.at<Vec3b>(x,y)[2]-50;  
+            if(mat_frame.at<uchar>(x,y)>40){
+                mat_frame.at<uchar>(x,y)=255;
+          
+            }else{
+             mat_frame.at<uchar>(x,y)=0;
+            }
       } 
    }
     return mat_frame;
@@ -109,6 +68,8 @@ struct edges{
     double y_top;
     double y_bottom;
 };
+
+
 
 
 struct edges raster_image(Mat mat_frame){
@@ -148,68 +109,70 @@ struct edges raster_image(Mat mat_frame){
 
 int main( int argc, char** argv )
 {
-    Mat mat_frame, mat_gray, mat_diff, mat_gray_prev,diff_frame_blur;
-    Mat rgb_threshold_frame;
-    double x_bar,y_bar;
-    //VideoCapture cap("Light-Room-Laser-Spot-with-Clutter (1).mpeg");
-    VideoCapture cap("Dark-Room-Laser-Spot-with-Clutter.mpeg");
-    //VideoWriter video("Dark-Room-Laser-Spot-with-Clutter_modified.avi",CV_FOURCC('M','J','P','G'),10, Size(1920,1080));
+    Mat mat_frame,diff_frame2, mat_gray, mat_diff, mat_gray_prev,diff_frame_blur;
+    VideoCapture vcap;
+    unsigned int diffsum, maxdiff;
     struct edges edges_1 ={0,0,0,0};
+    double x_bar,y_bar;
+    //VideoCapture cap("Dark-Room-Laser-Spot-with-Clutter.mpeg");
+    VideoCapture cap("Light-Room-Laser-Spot-with-Clutter (1).mpeg");
+    //VideoWriter video("Dark-Room-Laser-Spot-with-Clutter_modified.avi",CV_FOURCC('M','J','P','G'),10, Size(1920,1080));
+
 	
     cap >> mat_frame;
+    //mat_frame=custom_rgb_threshold(mat_frame);
     cv::cvtColor(mat_frame, mat_gray, CV_BGR2GRAY);
     //cvNamedWindow("mat_frame", CV_WINDOW_AUTOSIZE);
 
-    mat_diff = mat_gray;
-    mat_gray_prev = mat_gray;
 
-
+    mat_diff = mat_gray.clone();
+    mat_diff=custom_threshold(mat_diff);
+    medianBlur(mat_diff,mat_diff,3);
+    mat_gray_prev = mat_gray.clone();
+    int i=1;
+    string image_name="pgm images/image_1.pgm";
     while(1)
     {
 	
 	cap >> mat_frame;
-    //imshow("mat_frame_normal",mat_frame);
-    mat_frame =mat_frame & Scalar(0,255,0);
-    //rgb_threshold_frame=custom_rgb_threshold(mat_frame); 
-    //imshow("rgb threshold output",rgb_threshold_frame);  
-   // mat_frame = red_green_intensity_flusher(mat_frame);
-    //imshow("mat_frame after red intensity flush",mat_frame);
-    mat_frame=custom_rgb_threshold(mat_frame);
-    //rgb_threshold_frame =mat_frame & Scalar(0,255,0);
-    
+    imshow("Original",mat_frame);
+    mat_frame = mat_frame & Scalar(0,255,0);
+    mat_frame = custom_rgb_threshold(mat_frame);
+    imshow("green channel only",mat_frame);
 	cv::cvtColor(mat_frame, mat_gray, CV_BGR2GRAY);
-    imshow("mat_frame_gray",mat_gray);
     mat_gray=custom_threshold(mat_gray);
-    //imshow("mat_frame_gray after threshold",mat_gray);
-    //medianBlur(mat_gray,mat_gray,3);
-    GaussianBlur(mat_gray,mat_gray,Size(3,3),3);
-    addWeighted(mat_gray,1.5,mat_gray,-0.5,0,mat_gray);
-    imshow("mat_frame_gray after threshold and then median blur",mat_gray);
-	absdiff(mat_gray_prev, mat_gray, mat_diff);
-    imshow("Mat_diff before raster",mat_diff);
-   
-   
-    medianBlur(mat_diff,mat_diff,3);
-    mat_diff = custom_threshold(mat_diff);
-    //mat_diff = salt_noise_removal(mat_diff);
     
+    imshow("green channel only grayed",mat_gray);
+    
+	absdiff(mat_gray_prev, mat_gray, mat_diff);
+
+    //imshow("abs diff before gaussian",mat_diff);
+    GaussianBlur(mat_diff,mat_diff,Size(3,3),3);
+    addWeighted(mat_diff,1.5,mat_diff,-0.5,0,mat_diff);
+    imshow("abs diff after gaussian",mat_diff);
+    imwrite(image_name,mat_diff);
+    //at_gray=mat_diff;
     edges_1=raster_image(mat_gray);
     x_bar=(edges_1.x_right-edges_1.x_left)/2+edges_1.x_left;
     y_bar=(edges_1.y_bottom-edges_1.y_top)/2+edges_1.y_top;
     printf("\nx_bar:%f y_bar:%f",x_bar,y_bar);
     sprintf(difftext, "x_bar:%f y_bar:%f",x_bar,y_bar);
-    line(mat_diff,Point(edges_1.x_left-30,y_bar),Point(edges_1.x_right+30,y_bar),255,3,8);
-    line(mat_diff,Point(x_bar,edges_1.y_top-30),Point(x_bar,edges_1.y_bottom+30),255,3,8);
-    
+    line(mat_gray,Point(edges_1.x_left-30,y_bar),Point(edges_1.x_right+30,y_bar),255,3,8);
+    line(mat_gray,Point(x_bar,edges_1.y_top-30),Point(x_bar,edges_1.y_bottom+30),255,3,8);
+    cv::putText(mat_diff, difftext, cvPoint(30,30), FONT_HERSHEY_COMPLEX_SMALL, 0.8, 255, 1, CV_AA);
+    //mat_diff=custom_threshold(mat_diff);
+    //medianBlur(mat_diff,mat_diff,15);
 
-    imshow("mat_diff",mat_diff);
-   
-    //imshow("mat diff blue",diff_frame_blur);
-   // video << mat_diff;
+    image_name = "pgm images/image_"+to_string(i)+".pgm";
+    i++;
+    imshow("mat_diff",mat_gray);
+    //imwrite(image_name,mat_diff);
+    //imshow("mat diff blur",diff_frame_blur);
+    //video << mat_diff;
     //printf("\n capturing frame");
 
 
-        char c = cvWaitKey(33); 
+        char c = cvWaitKey(10); 
         if( c == 'q' ) break;
 
      mat_gray_prev = mat_gray.clone();

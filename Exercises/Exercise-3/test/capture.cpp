@@ -70,6 +70,8 @@ struct edges{
 };
 
 
+
+
 struct edges raster_image(Mat mat_frame){
     printf("\nEntered raster image");
     int x,y;
@@ -107,7 +109,7 @@ struct edges raster_image(Mat mat_frame){
 
 int main( int argc, char** argv )
 {
-    Mat mat_frame, mat_gray, mat_diff, mat_gray_prev,diff_frame_blur;
+    Mat mat_frame,diff_frame2, mat_gray, mat_diff, mat_gray_prev,diff_frame_blur;
     VideoCapture vcap;
     unsigned int diffsum, maxdiff;
     struct edges edges_1 ={0,0,0,0};
@@ -118,7 +120,7 @@ int main( int argc, char** argv )
 
 	
     cap >> mat_frame;
-    mat_frame=custom_rgb_threshold(mat_frame);
+    //mat_frame=custom_rgb_threshold(mat_frame);
     cv::cvtColor(mat_frame, mat_gray, CV_BGR2GRAY);
     //cvNamedWindow("mat_frame", CV_WINDOW_AUTOSIZE);
 
@@ -132,22 +134,36 @@ int main( int argc, char** argv )
     {
 	
 	cap >> mat_frame;
+    //imshow("Original",mat_frame);
+    mat_frame = mat_frame & Scalar(0,255,0);
+    mat_frame = custom_rgb_threshold(mat_frame);
+    //imshow("green channel only",mat_frame);
 	cv::cvtColor(mat_frame, mat_gray, CV_BGR2GRAY);
-
+    mat_gray=custom_threshold(mat_gray);
+    
+    //imshow("green channel only grayed",mat_gray);
+    
 	absdiff(mat_gray_prev, mat_gray, mat_diff);
+
+    //imshow("abs diff before gaussian",mat_diff);
+    GaussianBlur(mat_diff,mat_diff,Size(3,3),3);
+    addWeighted(mat_diff,1.5,mat_diff,-0.5,0,mat_diff);
+    imshow("abs diff after gaussian",mat_diff);
+    //at_gray=mat_diff;
+    edges_1=raster_image(mat_gray);
     x_bar=(edges_1.x_right-edges_1.x_left)/2+edges_1.x_left;
     y_bar=(edges_1.y_bottom-edges_1.y_top)/2+edges_1.y_top;
     printf("\nx_bar:%f y_bar:%f",x_bar,y_bar);
     sprintf(difftext, "x_bar:%f y_bar:%f",x_bar,y_bar);
-    line(mat_diff,Point(edges_1.x_left-30,y_bar),Point(edges_1.x_right+30,y_bar),255,3,8);
-    line(mat_diff,Point(x_bar,edges_1.y_top-30),Point(x_bar,edges_1.y_bottom+30),255,3,8);
+    line(mat_gray,Point(edges_1.x_left-30,y_bar),Point(edges_1.x_right+30,y_bar),255,3,8);
+    line(mat_gray,Point(x_bar,edges_1.y_top-30),Point(x_bar,edges_1.y_bottom+30),255,3,8);
     cv::putText(mat_diff, difftext, cvPoint(30,30), FONT_HERSHEY_COMPLEX_SMALL, 0.8, 255, 1, CV_AA);
     //mat_diff=custom_threshold(mat_diff);
     //medianBlur(mat_diff,mat_diff,15);
 
     //image_name = "image_"+to_string(i)+".pgm";
     i++;
-    imshow("mat_diff",mat_diff);
+    imshow("mat_diff",mat_gray);
     //imwrite(image_name,mat_diff);
     //imshow("mat diff blur",diff_frame_blur);
     //video << mat_diff;

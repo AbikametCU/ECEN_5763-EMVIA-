@@ -80,8 +80,6 @@ int main( int argc, char** argv )
 {
     Mat mat_frame, mat_gray, mat_diff, mat_gray_prev,diff_frame_blur;
     VideoCapture vcap;
-    unsigned int diffsum, maxdiff;
-    double percent_diff;
     VideoCapture cap("Dark-Room-Laser-Spot-with-Clutter.mpeg");
     //VideoCapture cap("Light-Room-Laser-Spot-with-Clutter (1).mpeg");
     VideoWriter video("Dark-Room-Laser-Spot-with-Clutter_modified.avi",CV_FOURCC('M','J','P','G'),10, Size(1920,1080));
@@ -99,6 +97,7 @@ int main( int argc, char** argv )
     {
 	
 	cap >> mat_frame;
+    mat_frame = mat_frame & Scalar(0,255,0);
 	cv::cvtColor(mat_frame, mat_gray, CV_BGR2GRAY);
 
 	absdiff(mat_gray_prev, mat_gray, mat_diff);
@@ -110,7 +109,7 @@ int main( int argc, char** argv )
     imshow("mat_diff",mat_diff);
    // imwrite(image_name,mat_diff);
     //imshow("mat diff blur",diff_frame_blur);
-    video << mat_diff;
+    //video << mat_diff;
     //printf("\n capturing frame");
 
 
