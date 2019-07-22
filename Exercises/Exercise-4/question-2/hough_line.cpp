@@ -56,6 +56,7 @@ int main(int argc, char** argv)
  #endif
  imshow("source", src);
  imshow("detected lines", cdst);
+ imwrite("detected_lines_tree.ppm",cdst);
 
  waitKey();
 

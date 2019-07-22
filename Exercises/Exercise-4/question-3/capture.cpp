@@ -57,7 +57,6 @@ Mat skeletal_transform(Mat src){
    erode(mfblur, eroded, element);
    dilate(eroded, temp, element);
    subtract(mfblur, temp, temp);
-   imshow("subtracted image",temp);
    bitwise_or(skel, temp, skel);
    eroded.copyTo(mfblur);
 
@@ -75,10 +74,12 @@ Mat skeletal_transform(Mat src){
 
 int main( int argc, char** argv )
 {
-    //cvNamedWindow("Capture Example", CV_WINDOW_AUTOSIZE);
+    cvNamedWindow("Capture Example", CV_WINDOW_AUTOSIZE);
     VideoCapture cap(0);
     Mat frame,skel;
     int frames_count = 0;
+    string image_name = "image_1";
+    int i=0;
 
     while(1)
     {
@@ -87,17 +88,19 @@ int main( int argc, char** argv )
             break;
         }
         frames_count++;
-        if(frames_count>100){
+        if(frames_count>300){
             break;
         }
 
         skel = skeletal_transform(frame); 
-        
+        image_name = "image_"+to_string(i)+".pgm";
         imshow("skeleton", skel);
-
-
+        //imwrite(image_name,skel);
         char c = cvWaitKey(33);
-        if( c == 27 ) break;
+        if( c == 27 ) {
+            break;
+        }
+        i++;
     }
     
     //cvReleaseCapture(&capture);
