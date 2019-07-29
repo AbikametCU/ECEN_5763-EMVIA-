@@ -1,8 +1,4 @@
-/*
- *
- *  Example by Sam Siewert 
- *
- */
+
 #include "opencv2/imgproc/imgproc.hpp"
 #include <unistd.h>
 #include <stdio.h>
